@@ -1,28 +1,115 @@
+import { useState } from "react";
+import { useRouter } from "next/router";
+import Cookie from "universal-cookie";
+import { setTheUsername } from "whatwg-url";
+
+const cookie = new Cookie()
+
 export default function Auth() {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+
+  const login = async () => {
+    try {
+      // jwtのトークンを取得するための処理
+      // usernameとpasswordをPOSTメソッドでエンドポイントに渡すことで、レスポンスとしてアクセストークンを取得することができる。
+      await fetch(
+        `${process.env.NEXT_PUBLIC_RESTAPI_URL}api/auth/jwt/create/`,
+        {
+          method: "POST",
+          body: JSON.stringify({ username: username, password: password }),
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+      ).then(res => {
+        if (res.status === 400) {
+          throw "ログインに失敗しました"
+        } else if (res.ok) {
+          // レスポンスをJSONオブジェクトに変換し、返す
+          return res.json()
+        }
+      })
+        .then((data) => {
+          const options = { path: "/" };
+          // アクセストークンをクッキーに設定。
+          // data.accessはレスポンス(引数data)にあるアクセストークンのこと。
+          // optionsは、「このパス以下でクッキーが有効に使えること」を示す。
+          cookie.set("access_token", data.access, options)
+        });
+      // 上記の非同期通信が終了したら、routerの機能を使ってメインページへ遷移させる
+      router.push("/main-page");
+    } catch (error) {
+      // 「throw ""」の内容がアラートで表示される
+      alert(error);
+    }
+  };
+
+  const authUser = async (e) => {
+    // 「Sign in」ボタンをクリックした時にリロードされることを防ぐ。
+    e.preventDefault();
+    if (isLogin) {
+      // ログインしていない(true)ならログインを行う。
+      login();
+    } else {
+      try {
+        // falseならユーザー登録を行う
+        await fetch(
+          `${process.env.NEXT_PUBLIC_RESTAPI_URL}api/register`,
+          {
+            method: "POST",
+            body: JSON.stringify({ username: username, password: password }),
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        ).then((res) => {
+          if (res.status === 400) {
+            throw "ユーザー登録に失敗しました";
+          }
+        });
+        // 上記のユーザー登録に成功したら、そのままログインを行う。
+        login();
+      } catch (error) {
+        alert(error);
+      }
+    }
+  }
+
+  const changeUsername = (e) => {
+    setUsername(e.target.value)
+  }
+
+  const changePassword = (e) => {
+    setPassword(e.target.value)
+  }
+
   return (
     <div className="max-w-md w-full space-y-8">
       <div>
         <img className="mx-auto h-12 w-auto" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg" alt="Workflow" />
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-          Sign in to your account
+          {isLogin ? "Login" : "Sign up"}
         </h2>
       </div>
-      <form className="mt-8 space-y-6" action="#" method="POST">
+      <form className="mt-8 space-y-6" onSubmit={authUser}>
         <input type="hidden" name="remember" value="true" />
         <div className="rounded-md shadow-sm -space-y-px">
           <div>
-            <input id="email-address" name="email" type="email" autoComplete="email" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address" />
+            <input name="username" type="text" autoComplete="username" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="ユーザー名" value={username} onChange={changeUsername} />
           </div>
           <div>
-            <input id="password" name="password" type="password" autoComplete="current-password" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password" />
+            <input name="password" type="password" autoComplete="current-password" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="パスワード" value={password} onChange={changePassword} />
           </div>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="text-sm">
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Forgot your password?
-            </a>
+            <span onClick={() => setIsLogin(!isLogin)} className="font-medium text-white hover:text-indigo-500 cursor-pointer">
+              isLoginのチェック
+            </span>
           </div>
         </div>
 
@@ -33,7 +120,7 @@ export default function Auth() {
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
             </span>
-            Sign in
+            {isLogin ? "ログイン" : "ユーザー登録"}
           </button>
         </div>
       </form>
