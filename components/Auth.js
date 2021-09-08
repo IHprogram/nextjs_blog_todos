@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Cookie from "universal-cookie";
-import { setTheUsername } from "whatwg-url";
 
 const cookie = new Cookie()
 
@@ -22,9 +21,9 @@ export default function Auth() {
           body: JSON.stringify({ username: username, password: password }),
           headers: {
             "Content-Type": "application/json",
-          }
+          },
         }
-      ).then(res => {
+      ).then((res) => {
         if (res.status === 400) {
           throw "ログインに失敗しました"
         } else if (res.ok) {
@@ -42,30 +41,27 @@ export default function Auth() {
       // 上記の非同期通信が終了したら、routerの機能を使ってメインページへ遷移させる
       router.push("/main-page");
     } catch (error) {
-      // 「throw ""」の内容がアラートで表示される
       alert(error);
     }
   };
 
   const authUser = async (e) => {
-    // 「Sign in」ボタンをクリックした時にリロードされることを防ぐ。
+    // 「Sign in」ボタンをクリックした時にリロードされることを防ぐ
     e.preventDefault();
     if (isLogin) {
-      // ログインしていない(true)ならログインを行う。
+      // trueならログインモードなので、login関数を実行する
       login();
     } else {
       try {
         // falseならユーザー登録を行う
         await fetch(
-          `${process.env.NEXT_PUBLIC_RESTAPI_URL}api/register`,
-          {
-            method: "POST",
-            body: JSON.stringify({ username: username, password: password }),
-            headers: {
-              "Content-Type": "application/json",
-            }
-          }
-        ).then((res) => {
+          `${process.env.NEXT_PUBLIC_RESTAPI_URL}api/register/`, {
+          method: "POST",
+          body: JSON.stringify({ username: username, password: password }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((res) => {
           if (res.status === 400) {
             throw "ユーザー登録に失敗しました";
           }
