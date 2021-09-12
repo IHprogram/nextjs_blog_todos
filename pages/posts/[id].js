@@ -6,7 +6,8 @@ import { getAllPostIds, getPostData } from '../../lib/posts';
 const Post = ({ post }) => {
   const router = useRouter();
 
-  if (!post) {
+  // 存在していないidのページにアクセスした時に、isFallbackがtrueになる
+  if (router.isFallback || !post) {
     return <div>Loading...</div>
   }
   return (
@@ -35,9 +36,10 @@ export default Post;
 export const getStaticPaths = async () => {
   const paths = await getAllPostIds();
 
+  // 詳細画面で新しく追加された記事に対して「404 Not Found」の画面が表示されないようにするために「fallback: true」を設定
   return {
     paths,
-    fallback: false,
+    fallback: true,
   }
 }
 
@@ -46,6 +48,8 @@ export const getStaticProps = async ({ params }) => {
   return {
     props: {
       post,
-    }
+    },
+    // HTML再生性のインターバルの時間を3秒に指定
+    revalidate: 3,
   }
 }
