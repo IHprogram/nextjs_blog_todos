@@ -27,6 +27,8 @@ export const getStaticProps = async () => {
   const filteredPosts = await getAllPostsData();
   return {
     props: { filteredPosts },
+    // ブログ一覧のHTMLを3秒に一回再生成(これがないとずっとビルド時に取得した時のままになる)
+    revalidate: 3,
   };
 }
 
