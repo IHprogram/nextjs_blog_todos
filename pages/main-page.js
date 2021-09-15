@@ -22,6 +22,11 @@ const MainPage = () => {
           <a>ブログ一覧へ</a>
         </Link>
       </div>
+      <div className="mt-10 cursor-pointer">
+        <Link href="/task-page">
+          <a>タスク一覧へ</a>
+        </Link>
+      </div>
     </Layout>
   )
 }
